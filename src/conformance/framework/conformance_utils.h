@@ -792,11 +792,12 @@ namespace Conformance
             Error
         };
 
+    private:
         /// Calls xrWaitFrame, xrLocateViews, xrBeginFrame. In doing so it sets up viewVector.
-        /// This is a building block function used by PrepareSubmitFrame or possibly an external
-        /// user wanting more custom control.
-        RunResult WaitAndBeginFrame();
+        /// This is a building block function used by PrepareSubmitFrame.
+        void WaitAndBeginFrame();
 
+    public:
         /// Calls xrAcquireSwapchainImage, xrWaitSwapchainImage, xrReleaseSwapchainImage on each
         /// of the swapchains, in preparation for a call to EndFrame with the swapchains. Does not
         /// draw anything to the images.
@@ -804,14 +805,15 @@ namespace Conformance
         /// user wanting more custom control.
         RunResult CycleToNextSwapchainImage();
 
+    private:
         /// Sets up XrFrameEndInfo and XrCompositionLayerProjection, in preparation for a call to
         /// xrEndFrame. However, this leaves the frameEndInfo.layerCount and frameEndInfo.layers
         /// variables zeroed, with the expectation that the caller will set them appropriately and
         /// then call xrEndFrame.
-        /// This is a building block function used by PrepareSubmitFrame or possibly an external
-        /// user wanting more custom control.
-        RunResult PrepareFrameEndInfo();
+        /// This is a building block function used by PrepareSubmitFrame.
+        void PrepareFrameEndInfo();
 
+    public:
         /// This function calls WaitAndBeginFrame(), DrawSwapchains(), PrepareFrameEndInfo() and
         /// any error checking along the way. No need to call these three functions if you are
         /// calling this function. This itself is a higher level building block function for
