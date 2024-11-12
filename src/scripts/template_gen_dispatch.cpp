@@ -118,6 +118,17 @@
 //## ### Special Case Handle Creation Follows ###
 //## Dealing with other ways that handles come into our world
 
+//## xrCreateSwapchainAndroidSurfaceKHR is a special case because
+//## this is a create command but returned swapchain is not the last parameter.
+//#         set is_create_swapchain_android_surface = ("xrCreateSwapchainAndroidSurfaceKHR" == cur_cmd.name)
+//#         if is_create_swapchain_android_surface
+    if (XR_SUCCEEDED(result)) {
+//#             set penultimate_param_name = cur_cmd.params[-2].name
+        HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{first_handle_name}*/), XR_OBJECT_TYPE_SESSION});
+        RegisterHandleState(parentHandleState->CloneForChild(HandleToInt(* /*{penultimate_param_name}*/), XR_OBJECT_TYPE_SWAPCHAIN));
+    }
+//#         endif
+
 //## If this is a xrQuerySpacesFB, we have to create an entry in
 //## the appropriate unordered_map pointing to the correct dispatch table for
 //## the newly created objects.
