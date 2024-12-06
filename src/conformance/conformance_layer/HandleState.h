@@ -123,9 +123,14 @@ struct HandleNotFoundException : public HandleException
     }
 };
 
+/// Global handle state map key: The value of a handle as an int, and its XrObjectType enumerant.
 using HandleStateKey = std::pair<IntHandle, XrObjectType>;
 
+/// Destroy a handle state object owned by the global handle state map.
 void UnregisterHandleState(HandleStateKey key);
+
+/// Transfer ownership of a handle state object to the global handle state map.
+/// Usually called directly with the return value of @ref HandleState::CloneForChild
 void RegisterHandleState(std::unique_ptr<HandleState> handleState);
 
 /// Retrieve common handle state based on a handle and object type enum.
