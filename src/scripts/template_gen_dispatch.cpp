@@ -48,9 +48,9 @@
 
 /*{ cur_cmd.cdecl | collapse_whitespace | replace(" xr", " ConformanceLayer_xr") | replace(";", "")
 }*/ {
-//#         set first_param_object_type = gen.genXrObjectType(handle_type)
+//#         set first_handle_object_type = gen.genXrObjectType(handle_type)
     try {
-        HandleState* const handleState = GetHandleState({HandleToInt(/*{first_handle_name}*/), /*{first_param_object_type}*/});
+        HandleState* const handleState = GetHandleState({HandleToInt(/*{ first_handle_name }*/), /*{ first_handle_object_type }*/});
 
         return handleState->conformanceHooks->/*{cur_cmd.name}*/(/*{ cur_cmd.params | map(attribute="name") | join(", ") }*/);
     }
@@ -97,18 +97,21 @@
 //#         set is_destroy = (("xrDestroy" in cur_cmd.name) and is_last_arg_handle)
 //#         if is_create or is_destroy
     if (XR_SUCCEEDED(result)) {
-//#             set last_param_name = cur_cmd.params[-1].name
-//#             set last_param_type = cur_cmd.params[-1].type
-//#             set last_param_object_type = gen.genXrObjectType(last_param_type)
+//#             set out_handle_param_name = cur_cmd.params[-1].name
+//#             set out_handle_type = cur_cmd.params[-1].type
+//#             set out_handle_object_type = gen.genXrObjectType(out_handle_type)
 //#             if is_create
-        HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{first_handle_name}*/), /*{first_param_object_type}*/});
-        RegisterHandleState(parentHandleState->CloneForChild(HandleToInt(* /*{last_param_name}*/), /*{last_param_object_type}*/));
+        HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{ first_handle_name }*/), /*{ first_handle_object_type }*/});
+        RegisterHandleState(parentHandleState->CloneForChild(HandleToInt(* /*{ out_handle_param_name }*/), /*{ out_handle_object_type }*/));
 //#             endif
 //#             if is_destroy
-        UnregisterHandleState({HandleToInt(/*{last_param_name}*/), /*{last_param_object_type}*/});
+        UnregisterHandleState({HandleToInt(/*{ first_handle_name }*/), /*{ first_handle_object_type }*/});
 //#             endif
     }
 //#         endif
+
+//## ### Special Case Handle Creation Follows ###
+//## Dealing with other ways that handles come into our world
 
 //## If this is a xrQuerySpacesFB, we have to create an entry in
 //## the appropriate unordered_map pointing to the correct dispatch table for
@@ -117,9 +120,9 @@
 //#         set is_query_spaces = ("xrQuerySpacesFB" == cur_cmd.name)
 //#         if is_create_spatial_anchor or is_query_spaces
     if (XR_SUCCEEDED(result)) {
-//#             set last_param_name = cur_cmd.params[-1].name
-        HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{first_handle_name}*/), XR_OBJECT_TYPE_SESSION});
-        RegisterHandleState(parentHandleState->CloneForChild(* /*{last_param_name}*/, static_cast<XrObjectType>(XR_TYPE_EVENT_DATA_SPATIAL_ANCHOR_CREATE_COMPLETE_FB)));
+//#             set out_handle_name = cur_cmd.params[-1].name
+        HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{ first_handle_name }*/), XR_OBJECT_TYPE_SESSION});
+        RegisterHandleState(parentHandleState->CloneForChild(* /*{ out_handle_name }*/, static_cast<XrObjectType>(XR_TYPE_EVENT_DATA_SPATIAL_ANCHOR_CREATE_COMPLETE_FB)));
     }
 //#         endif
 
@@ -144,11 +147,11 @@
 //#         set is_space_query_results = ("xrRetrieveSpaceQueryResultsFB" == cur_cmd.name)
 //#         if is_space_query_results
     if (XR_SUCCEEDED(result)) {
-//#             set last_param_name = cur_cmd.params[-1].name
-        if (/*{last_param_name}*/->results) {
-            for (uint32_t i = 0; i < /*{last_param_name}*/->resultCountOutput; ++i) {
-                HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{first_handle_name}*/), XR_OBJECT_TYPE_SESSION});
-                RegisterHandleState(parentHandleState->CloneForChild(HandleToInt(/*{last_param_name}*/->results[i].space), XR_OBJECT_TYPE_SPACE));
+//#             set out_param_name = cur_cmd.params[-1].name
+        if (/*{ out_param_name }*/->results) {
+            for (uint32_t i = 0; i < /*{ out_param_name }*/->resultCountOutput; ++i) {
+                HandleState* const parentHandleState = GetHandleState(HandleStateKey{HandleToInt(/*{ first_handle_name }*/), XR_OBJECT_TYPE_SESSION});
+                RegisterHandleState(parentHandleState->CloneForChild(HandleToInt(/*{ out_param_name }*/->results[i].space), XR_OBJECT_TYPE_SPACE));
             }
         }
     }
