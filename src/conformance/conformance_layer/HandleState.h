@@ -133,6 +133,10 @@ void UnregisterHandleState(HandleStateKey key);
 /// Usually called directly with the return value of @ref HandleState::CloneForChild
 void RegisterHandleState(std::unique_ptr<HandleState> handleState);
 
+/// Combines @ref GetHandleState for the parent handle, @ref HandleState::CloneForChild, and @ref RegisterHandleState
+/// since they are frequently used together in this single configuration.
+void CreateAndRegisterHandleState(HandleStateKey parentHandleKey, HandleStateKey handleKey);
+
 /// Retrieve common handle state based on a handle and object type enum.
 /// Throws if not found.
 HandleState* GetHandleState(HandleStateKey key);
