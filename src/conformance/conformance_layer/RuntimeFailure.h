@@ -20,6 +20,11 @@
 #include "gen_dispatch.h"
 #include <openxr/openxr_reflection.h>
 
+#include <deque>
+#include <string>
+
+struct ConformanceHooksBase;
+
 // Backs up the chain of type and next pointers. On destruction, validates there have been no changes.
 // This should be used on all non-const pointer arguments (out parameters).
 struct XrBaseStructChainValidator
