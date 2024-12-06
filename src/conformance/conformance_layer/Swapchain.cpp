@@ -58,9 +58,10 @@ namespace swapchain
 // ABI
 /////////////////
 
-XrResult ConformanceHooks::xrCreateSwapchain(XrSession session, const XrSwapchainCreateInfo* createInfo, XrSwapchain* swapchain)
+XrResult ConformanceHooks::xrCreateSwapchain(HandleState* const handleState, XrSession session, const XrSwapchainCreateInfo* createInfo,
+                                             XrSwapchain* swapchain)
 {
-    const XrResult result = ConformanceHooksBase::xrCreateSwapchain(session, createInfo, swapchain);
+    const XrResult result = ConformanceHooksBase::xrCreateSwapchain(handleState, session, createInfo, swapchain);
     if (XR_SUCCEEDED(result)) {
         // Tag on the custom swapchain state to the generated handle state.
         session::CustomSessionState* const customSessionState = session::GetCustomSessionState(session);
@@ -70,10 +71,11 @@ XrResult ConformanceHooks::xrCreateSwapchain(XrSession session, const XrSwapchai
     return result;
 }
 
-XrResult ConformanceHooks::xrEnumerateSwapchainImages(XrSwapchain swapchain, uint32_t imageCapacityInput, uint32_t* imageCountOutput,
-                                                      XrSwapchainImageBaseHeader* images)
+XrResult ConformanceHooks::xrEnumerateSwapchainImages(HandleState* const handleState, XrSwapchain swapchain, uint32_t imageCapacityInput,
+                                                      uint32_t* imageCountOutput, XrSwapchainImageBaseHeader* images)
 {
-    const XrResult result = ConformanceHooksBase::xrEnumerateSwapchainImages(swapchain, imageCapacityInput, imageCountOutput, images);
+    const XrResult result =
+        ConformanceHooksBase::xrEnumerateSwapchainImages(handleState, swapchain, imageCapacityInput, imageCountOutput, images);
     if (XR_SUCCEEDED(result)) {
         if (imageCountOutput != nullptr) {
             CustomSwapchainState* const customSwapchainState = GetCustomSwapchainState(swapchain);
@@ -105,9 +107,10 @@ XrResult ConformanceHooks::xrEnumerateSwapchainImages(XrSwapchain swapchain, uin
     return result;
 }
 
-XrResult ConformanceHooks::xrAcquireSwapchainImage(XrSwapchain swapchain, const XrSwapchainImageAcquireInfo* acquireInfo, uint32_t* index)
+XrResult ConformanceHooks::xrAcquireSwapchainImage(HandleState* const handleState, XrSwapchain swapchain,
+                                                   const XrSwapchainImageAcquireInfo* acquireInfo, uint32_t* index)
 {
-    const XrResult result = ConformanceHooksBase::xrAcquireSwapchainImage(swapchain, acquireInfo, index);
+    const XrResult result = ConformanceHooksBase::xrAcquireSwapchainImage(handleState, swapchain, acquireInfo, index);
     if (XR_SUCCEEDED(result)) {
         CustomSwapchainState* const swapchainData = GetCustomSwapchainState(swapchain);
         std::unique_lock<std::recursive_mutex> lock(swapchainData->mutex);
@@ -116,7 +119,7 @@ XrResult ConformanceHooks::xrAcquireSwapchainImage(XrSwapchain swapchain, const 
             // Must enumerate the swapchain images to set up the imageStates vector to the correct size.
             // This is an unusual situation because it means the app is calling xrAcquireSwapchainImage without first enumerating the swapchain images.
             uint32_t imageCountOutput;
-            const XrResult enumRes = ConformanceHooks::xrEnumerateSwapchainImages(swapchain, 0, &imageCountOutput, nullptr);
+            const XrResult enumRes = ConformanceHooks::xrEnumerateSwapchainImages(handleState, swapchain, 0, &imageCountOutput, nullptr);
             NONCONFORMANT_IF(!XR_SUCCEEDED(enumRes), "Unable to enumerate swapchain images due to error %s", to_string(enumRes));
         }
         else {
@@ -135,11 +138,12 @@ XrResult ConformanceHooks::xrAcquireSwapchainImage(XrSwapchain swapchain, const 
     return result;
 }
 
-XrResult ConformanceHooks::xrWaitSwapchainImage(XrSwapchain swapchain, const XrSwapchainImageWaitInfo* waitInfo)
+XrResult ConformanceHooks::xrWaitSwapchainImage(HandleState* const handleState, XrSwapchain swapchain,
+                                                const XrSwapchainImageWaitInfo* waitInfo)
 {
     auto waitStart = std::chrono::high_resolution_clock::now();
 
-    const XrResult result = ConformanceHooksBase::xrWaitSwapchainImage(swapchain, waitInfo);
+    const XrResult result = ConformanceHooksBase::xrWaitSwapchainImage(handleState, swapchain, waitInfo);
 
     if (result == XR_TIMEOUT_EXPIRED) {
         XrDuration waitDuration =
@@ -167,9 +171,10 @@ XrResult ConformanceHooks::xrWaitSwapchainImage(XrSwapchain swapchain, const XrS
     return result;
 }
 
-XrResult ConformanceHooks::xrReleaseSwapchainImage(XrSwapchain swapchain, const XrSwapchainImageReleaseInfo* releaseInfo)
+XrResult ConformanceHooks::xrReleaseSwapchainImage(HandleState* const handleState, XrSwapchain swapchain,
+                                                   const XrSwapchainImageReleaseInfo* releaseInfo)
 {
-    const XrResult result = ConformanceHooksBase::xrReleaseSwapchainImage(swapchain, releaseInfo);
+    const XrResult result = ConformanceHooksBase::xrReleaseSwapchainImage(handleState, swapchain, releaseInfo);
     if (XR_SUCCEEDED(result)) {
         CustomSwapchainState* const swapchainData = GetCustomSwapchainState(swapchain);
         std::unique_lock<std::recursive_mutex> lock(swapchainData->mutex);
