@@ -16,6 +16,7 @@
 
 #include "ConformanceHooks.h"
 #include "CustomHandleState.h"
+#include "HandleState.h"
 #include "IGraphicsValidator.h"
 #include "RuntimeFailure.h"
 
@@ -52,6 +53,11 @@ namespace swapchain
         return dynamic_cast<CustomSwapchainState*>(GetSwapchainState(handle)->GetCustomState());
     }
 
+    CustomSwapchainState* GetCustomSwapchainState(HandleState* handleState)
+    {
+        return dynamic_cast<CustomSwapchainState*>(handleState->GetCustomState());
+    }
+
 }  // namespace swapchain
 
 /////////////////
@@ -64,7 +70,7 @@ XrResult ConformanceHooks::xrCreateSwapchain(HandleState* const handleState, XrS
     const XrResult result = ConformanceHooksBase::xrCreateSwapchain(handleState, session, createInfo, swapchain);
     if (XR_SUCCEEDED(result)) {
         // Tag on the custom swapchain state to the generated handle state.
-        session::CustomSessionState* const customSessionState = session::GetCustomSessionState(session);
+        session::CustomSessionState* const customSessionState = session::GetCustomSessionState(handleState);
         GetSwapchainState(*swapchain)
             ->SetCustomState(std::make_unique<CustomSwapchainState>(createInfo, customSessionState->graphicsBinding));
     }
@@ -78,7 +84,7 @@ XrResult ConformanceHooks::xrEnumerateSwapchainImages(HandleState* const handleS
         ConformanceHooksBase::xrEnumerateSwapchainImages(handleState, swapchain, imageCapacityInput, imageCountOutput, images);
     if (XR_SUCCEEDED(result)) {
         if (imageCountOutput != nullptr) {
-            CustomSwapchainState* const customSwapchainState = GetCustomSwapchainState(swapchain);
+            CustomSwapchainState* const customSwapchainState = GetCustomSwapchainState(handleState);
             std::unique_lock<std::recursive_mutex> lock(customSwapchainState->mutex);
 
             NONCONFORMANT_IF(*imageCountOutput == 0, "Invalid empty image count.");
@@ -112,7 +118,7 @@ XrResult ConformanceHooks::xrAcquireSwapchainImage(HandleState* const handleStat
 {
     const XrResult result = ConformanceHooksBase::xrAcquireSwapchainImage(handleState, swapchain, acquireInfo, index);
     if (XR_SUCCEEDED(result)) {
-        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(swapchain);
+        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(handleState);
         std::unique_lock<std::recursive_mutex> lock(swapchainData->mutex);
 
         if (swapchainData->imageStates.empty()) {
@@ -151,7 +157,7 @@ XrResult ConformanceHooks::xrWaitSwapchainImage(HandleState* const handleState, 
         NONCONFORMANT_IF(waitDuration < waitInfo->timeout, "Wait returned before timeout.");
     }
     else if (result == XR_SUCCESS) {
-        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(swapchain);
+        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(handleState);
         std::unique_lock<std::recursive_mutex> lock(swapchainData->mutex);
 
         if (!swapchainData->acquiredSwapchains.empty()) {
@@ -176,7 +182,7 @@ XrResult ConformanceHooks::xrReleaseSwapchainImage(HandleState* const handleStat
 {
     const XrResult result = ConformanceHooksBase::xrReleaseSwapchainImage(handleState, swapchain, releaseInfo);
     if (XR_SUCCEEDED(result)) {
-        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(swapchain);
+        CustomSwapchainState* const swapchainData = GetCustomSwapchainState(handleState);
         std::unique_lock<std::recursive_mutex> lock(swapchainData->mutex);
 
         if (!swapchainData->acquiredSwapchains.empty()) {
